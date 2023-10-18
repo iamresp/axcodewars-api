@@ -126,6 +126,19 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
     }
   }
 
+  @SubscribeMessage('attempt')
+  handleAttemptMessage(ws: WebSocket): void {
+    const connection = this.connectionMap.get(ws);
+    const { peer2 } = connection.getValue();
+    const peerSocket = this.socketMap.get(peer2);
+
+    if (peerSocket) {
+      const attemptEvent = JSON.stringify({ event: 'attempt', data: null });
+
+      peerSocket.send(attemptEvent);
+    }
+  }
+
   @SubscribeMessage('win')
   handleWinMessage(ws: WebSocket): Observable<WsResponse> {
     const connection = this.connectionMap.get(ws);
