@@ -5,6 +5,7 @@ import {
   Get,
   Headers,
   NotFoundException,
+  Param,
   Post,
   Put,
   UseGuards,
@@ -45,6 +46,19 @@ export class AuthController {
       return this.userService.findOne({ uuid: decodedJwt.sub as string });
     } catch (e: unknown) {
       throw new BadRequestException();
+    }
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('user/:connId')
+  async getUserByConnId(
+    @Param('connId') connId: string,
+  ): Promise<Pick<User, 'avatar' | 'username'>> {
+    const user = await this.userService.findOne({ connId });
+
+    if (user) {
+      const { avatar, username } = user;
+      return { avatar, username };
     }
   }
 
