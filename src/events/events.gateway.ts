@@ -61,6 +61,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
     const connection = this.connectorService.connect(taskId);
     const { peer1 } = connection.getValue();
 
+    const connectEvent = JSON.stringify({ event: 'connect', data: peer1 });
+    ws.send(connectEvent);
+
     this.logger.log(`Initializing connection ${peer1} for task ${taskId}`);
     this.socketMap.set(peer1, ws);
     this.livenessMap.set(ws, true);
