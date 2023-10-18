@@ -23,6 +23,10 @@ export class ConnectorService {
     return this.pairs.get(connId);
   }
 
+  addToQueue(...connIds: string[]): void {
+    this.queue.next([...this.queue.getValue(), ...connIds]);
+  }
+
   removeFromQueue(...connIds: string[]): void {
     const queue = this.queue.getValue();
     connIds.forEach((connId) => queue.splice(queue.indexOf(connId), 1));
@@ -41,16 +45,13 @@ export class ConnectorService {
     const connection = new BehaviorSubject<Connection>({ peer1: connId });
 
     this.pairs.set(connId, connection);
-
-    // если очередь пуста, доступного пира для подключения нет, ставим новое подкл. в очередь
-    if (!this.queue.getValue().length) {
-      this.queue.next([...this.queue.getValue(), connId]);
-    }
+    this.addToQueue(connId);
 
     const subscription = this.queue.subscribe({
       next: (queue) => {
         if (
           queue.length &&
+          queue.includes(connId) &&
           queue[0] !== connId &&
           !connection.getValue().peer2
         ) {
@@ -69,21 +70,22 @@ export class ConnectorService {
     return connection;
   }
 
+  retry(connId: string): void {
+    if (!this.queue.getValue().includes(connId)) {
+      this.addToQueue(connId);
+    }
+  }
+
   decline(connId: string): void {
     const connection = this.pairs.get(connId);
     const peerId = this.getPeer(connId, connection);
-    const queue = this.queue.getValue();
 
     connection.next({ peer1: connId });
 
     if (peerId) {
       const peerConnection = this.pairs.get(peerId);
       peerConnection.next({ peer1: peerId, wasClosed: true });
-      this.queue.next([...queue, peerId, connId]);
-    } else {
-      if (!queue.includes(connId)) {
-        this.queue.next([...queue, connId]);
-      }
+      this.addToQueue(peerId);
     }
   }
 
@@ -95,14 +97,14 @@ export class ConnectorService {
     this.pairs.delete(connId);
     this.destructors.get(connection)?.();
 
+    if (queue.includes(connId)) {
+      this.removeFromQueue(connId);
+    }
+
     if (peerId) {
       const peerConnection = this.pairs.get(peerId);
       peerConnection.next({ peer1: peerId, wasClosed: true });
-      this.queue.next([...queue, peerId]);
-    }
-
-    if (queue.includes(connId)) {
-      this.removeFromQueue(connId);
+      this.addToQueue(peerId);
     }
   }
 }

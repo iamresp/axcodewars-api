@@ -77,9 +77,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
           const disconnectEvent = JSON.stringify({ event: 'disconnect' });
           ws.send(disconnectEvent);
           connection.next({ peer1 });
-        }
-        if (peer1 && peer2) {
+        } else if (peer1 && peer2) {
           const pairEvent = JSON.stringify({ event: 'pair', data: peer2 });
+          this.logger.log(`Pairing ${peer1} with ${peer2}`);
           ws.send(pairEvent);
         }
       },
@@ -97,6 +97,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
 
       peerSocket.send(readyEvent);
     }
+  }
+
+  @SubscribeMessage('retry')
+  handleRetryMessage(ws: WebSocket): void {
+    const connection = this.connectionMap.get(ws);
+    const { peer1 } = connection.getValue();
+
+    this.connectorService.retry(peer1);
   }
 
   @SubscribeMessage('push')
