@@ -105,6 +105,8 @@ export class ConnectorService {
 
   disconnect(taskId: string, connId: string): void {
     const connection = this.pairs.get(connId);
+    if (!connection) return;
+
     const peerId = this.getPeer(connId, connection);
     const queue = this.getQueue(taskId).getValue();
 
