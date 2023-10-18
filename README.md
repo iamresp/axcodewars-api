@@ -1,73 +1,243 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Бэкенд для codewars-like приложения
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Для работы с функционалом peer-to-peer соединения реализован API на веб сокетах. Для данных о задачах и пользователей используется REST API.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## REST API
 
-## Description
+### POST /api/user
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Создаёт нового пользователя. На вход принимает объект следующего вида:
 
-## Installation
-
-```bash
-$ npm install
+Формат запроса:
+```ts
+{
+  avatar: string;
+  hash: string;
+  username: string;
+}
 ```
 
-## Running the app
+Возвращает объект следующего вида, где uuid - ID созданного пользователя:
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+Формат ответа:
+```ts
+{
+  uuid: string;
+}
 ```
 
-## Test
+### POST /api/auth
 
-```bash
-# unit tests
-$ npm run test
+Авторизуется с указанным именем пользователя и хэшем пароля.
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+Формат запроса:
+```ts
+{
+  hash: string;
+  username: string;
+}
 ```
 
-## Support
+Возвращает JWT.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Формат ответа:
+```ts
+{
+  access_token: string;
+}
+```
 
-## Stay in touch
+### GET /api/auth/user
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+> Требует авторизации с помощью JWT: заголовок `Authorization` формата `Bearer ${jwt}`.
 
-## License
+Возвращает данные авторизованного пользователя.
 
-Nest is [MIT licensed](LICENSE).
+Формат ответа:
+```ts
+{
+  avatar: string;
+  connId: string;
+  hash: string;
+  username: string;
+  uuid: string;
+}
+```
+
+### PUT /api/auth/user
+
+> Требует авторизации с помощью JWT: заголовок `Authorization` формата `Bearer ${jwt}`.
+
+Обновляет данные пользователя. Все поля запроса необязательны.
+
+Формат запроса:
+```ts
+{
+  avatar?: string;
+  connId?: string;
+  hash?: string;
+  username?: string;
+  uuid?: string;
+}
+```
+
+Формат ответа:
+```ts
+{
+  avatar: string;
+  connId: string;
+  hash: string;
+  username: string;
+  uuid: string;
+}
+```
+
+### GET /api/auth/user/${connUuid}
+
+> Требует авторизации с помощью JWT: заголовок `Authorization` формата `Bearer ${jwt}`.
+
+Возвращает имя и аватар пользователя по идентификатору актуального подключения.
+
+Формат ответа:
+```ts
+{
+  avatar: string;
+  username: string;
+}
+```
+
+### GET /api/tasks
+
+> Требует авторизации с помощью JWT: заголовок `Authorization` формата `Bearer ${jwt}`.
+
+Возвращает список задач. `results` - кейсы, массив пар вида `[string, string]`, где первый элемент - JSON-представление аргументов для кейса, второй - ожидаемый результат.
+
+Формат ответа:
+```ts
+Array<{
+  description: string;
+  results: [string, string][];
+  title: string;
+  uuid: string;
+}>
+```
+
+### POST /api/tasks
+
+> Требует авторизации с помощью JWT: заголовок `Authorization` формата `Bearer ${jwt}`.
+
+Создаёт новую задачу.
+
+Формат запроса:
+```ts
+{
+  description: string;
+  results: [string, string][];
+  title: string;
+}
+```
+
+Формат ответа:
+```ts
+{
+  description: string;
+  results: [string, string][];
+  title: string;
+  uuid: string;
+}
+```
+
+### GET /api/tasks/${taskUuid}
+
+> Требует авторизации с помощью JWT: заголовок `Authorization` формата `Bearer ${jwt}`.
+
+Возвращает данные задачи по её uuid.
+
+Формат ответа:
+```ts
+{
+  description: string;
+  results: [string, string][];
+  title: string;
+  uuid: string;
+}
+```
+
+## WS API
+
+Подключение к WS-серверу целесообразно непосредственно при входе в процесс соревнования. Подключение инициирует поиск оппонентов, размещая пользователя в виртуальной очереди к соответствующей задачи.
+
+Т. к. подключения имеют смысл только в контексте конкретной задачи, подключение к WS-серверу необходимо осуществлять в следующем формате:
+```ts
+const socket = new WebSocket(`ws://example-api-url.com:12345?taskId=${taskUuid}`);
+```
+
+Далее, как только в очереди появится ещё один свободный пользователь, ищущий оппонента для той же задачи, пользователи будут соединены. После того, как оба отметят свою готовность, стартует соревнование.
+
+Бэкенд не предоставляет механизма проверки заданий, однако позволяет зафиксировать пользователя как победителя, автоматически отправив сопернику сообщение о поражении.
+
+Полный список доступных сообщений приведён далее.
+
+## Принимаемые сообщения
+
+### ready
+
+> формат: `{ event: 'ready' }`
+
+Позволяет передать противнику сигнал о готовности. Автоматически отправляет противнику аналогичное сообщение.
+
+### retry
+
+> формат: `{ event: 'retry' }`
+
+Если пользователь вышел из соревнования и не находится на текущий момент в очереди, возвращает его в очередь по выбранному заданию.
+
+### push
+
+> формат: `{ event: 'push', data: string }`
+
+Сообщение пользовательского ввода (расчитано на работу с событием input поля ввода кода пользователя). Автоматически отправляет противнику сообщение `pull` вида `{ event: 'push', data: string }`, где `data` - тот же текст, что пользователь прислал в сообщении `push`.
+
+### attempt
+
+> формат: `{ event: 'attempt' }`
+
+Фиксирует попытку выполнения своего кода пользователем. Позволяет вести учет количества попыток для обоих пользователей. Автоматически отправляет противнику аналогичное сообщение.
+
+### win
+
+> формат: `{ event: 'win' }`
+
+Сообщение о победе пользователя. Ничего не производит, только автмоатически отправляет противнику сообщение `lose` вида `{ event: 'lose' }`.
+
+### decline
+
+> формат: `{ event: 'decline' }`
+
+Разрывает соединение с противником, автоматически прекращая соревнование и возвращая противника в очередь к задаче. Не возвращает в очередь самого пользователя (для этого предусмотрено отдельное сообщение `retry`). После обработки провоцирует вызов сообщения `disconnect` противнику.
+
+## Отправляемые сообщения
+
+### disconnect
+
+> формат: `{ event: 'disconnect' }`
+
+Сообщение отправляется противнику при разрыве соединения (по любой причине: намеренное отключение сокета, непреднамеренная потеря соединения, сообщение `decline` от игрока).
+
+### pull
+
+> формат: `{ event: 'pull', data: string }`
+
+Передаёт текущий текст игрока противнику, вызывается отправкой игроком сообещния `push`.
+
+### attempt
+
+> формат: `{ event: 'attempt' }`
+
+Вызывается отправкой пользователем аналогичного сообщения серверу, отправляется противнику. Сигнализирует о попытке выполнения кода, успешной или нет.
+
+### lose
+
+> формат: `{ event: 'lose' }`
+
+Вызывается отправкой пользователем сообщения `win` серверу, отправляется противнику. Сигнализирует о победе пользователя.
