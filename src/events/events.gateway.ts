@@ -31,6 +31,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
   constructor(private connectorService: ConnectorService) {}
 
   afterInit() {
+    this.logger.log(`Starting WSS on port ${process.env.WS_PORT}`);
     const interval = setInterval(() => {
       this.server.clients.forEach((ws) => {
         if (this.livenessMap.get(ws) === false) {
