@@ -11,6 +11,7 @@ import {
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Server, WebSocket } from 'ws';
 import { config } from 'dotenv';
+import { IncomingMessage } from 'http';
 
 config();
 
@@ -22,6 +23,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
   connectionMap: WeakMap<WebSocket, BehaviorSubject<Connection>> =
     new WeakMap();
   livenessMap: WeakMap<WebSocket, boolean> = new WeakMap();
+  taskMap: WeakMap<WebSocket, string> = new WeakMap();
 
   @WebSocketServer()
   server: Server;
@@ -36,7 +38,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
 
           if (connId) {
             this.socketMap.delete(connId);
-            this.connectorService.disconnect(connId);
+            this.connectorService.disconnect(this.taskMap.get(ws), connId);
           }
           ws.terminate();
         }
@@ -52,13 +54,16 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
     });
   }
 
-  handleConnection(ws: WebSocket): void {
-    const connection = this.connectorService.connect();
+  handleConnection(ws: WebSocket, request: IncomingMessage): void {
+    const params = new URLSearchParams(request.url.split('?').at(-1));
+    const taskId = params.get('taskId');
+    const connection = this.connectorService.connect(taskId);
     const { peer1 } = connection.getValue();
 
-    this.logger.log(`Initializing connection ${peer1}`);
+    this.logger.log(`Initializing connection ${peer1} for task ${taskId}`);
     this.socketMap.set(peer1, ws);
     this.livenessMap.set(ws, true);
+    this.taskMap.set(ws, taskId);
     this.connectionMap.set(ws, connection);
 
     ws.on('pong', () => {
@@ -67,7 +72,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
     ws.on('close', () => {
       this.logger.log(`Disconnecting ${peer1}`);
       this.socketMap.delete(peer1);
-      this.connectorService.disconnect(peer1);
+      this.connectorService.disconnect(taskId, peer1);
     });
     ws.on('error', this.logger.error);
 
@@ -102,9 +107,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
   @SubscribeMessage('retry')
   handleRetryMessage(ws: WebSocket): void {
     const connection = this.connectionMap.get(ws);
+    const taskId = this.taskMap.get(ws);
     const { peer1 } = connection.getValue();
 
-    this.connectorService.retry(peer1);
+    this.connectorService.retry(taskId, peer1);
   }
 
   @SubscribeMessage('push')
@@ -138,8 +144,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayInit {
   @SubscribeMessage('decline')
   handleDeclineMessage(ws: WebSocket): Observable<WsResponse> {
     const connection = this.connectionMap.get(ws);
+    const taskId = this.taskMap.get(ws);
     const { peer1 } = connection.getValue();
-    this.connectorService.decline(peer1);
+    this.connectorService.decline(taskId, peer1);
 
     return of({ event: 'decline', data: null });
   }

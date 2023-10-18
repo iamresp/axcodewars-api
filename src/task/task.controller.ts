@@ -15,7 +15,7 @@ export class TaskController {
 
   @UseGuards(AuthGuard)
   @Get('/:id')
-  async getTask(@Param() uuid: string): Promise<Task> {
+  async getTask(@Param('id') uuid: string): Promise<Task> {
     return this.taskService.findOne({ uuid });
   }
 

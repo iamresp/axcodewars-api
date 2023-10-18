@@ -5,12 +5,20 @@ import { Connection } from './models';
 
 @Injectable()
 export class ConnectorService {
-  private readonly queue: BehaviorSubject<string[]> = new BehaviorSubject([]);
+  private readonly queue: Map<string, BehaviorSubject<string[]>> = new Map();
   private readonly pairs: Map<string, BehaviorSubject<Connection>> = new Map();
   private readonly destructors: WeakMap<
     BehaviorSubject<Connection>,
     () => void
   > = new WeakMap();
+
+  getQueue(taskId: string): BehaviorSubject<string[]> {
+    if (!this.queue.get(taskId)) {
+      this.queue.set(taskId, new BehaviorSubject([]));
+    }
+
+    return this.queue.get(taskId);
+  }
 
   getPeer(
     connId: string,
@@ -23,31 +31,37 @@ export class ConnectorService {
     return this.pairs.get(connId);
   }
 
-  addToQueue(...connIds: string[]): void {
-    this.queue.next([...this.queue.getValue(), ...connIds]);
+  addToQueue(taskId: string, ...connIds: string[]): void {
+    this.getQueue(taskId).next([
+      ...this.getQueue(taskId).getValue(),
+      ...connIds,
+    ]);
   }
 
-  removeFromQueue(...connIds: string[]): void {
-    const queue = this.queue.getValue();
+  removeFromQueue(taskId: string, ...connIds: string[]): void {
+    const queue = this.getQueue(taskId).getValue();
     connIds.forEach((connId) => queue.splice(queue.indexOf(connId), 1));
-    this.queue.next([...queue]);
+    this.getQueue(taskId).next([...queue]);
   }
 
-  connect(): BehaviorSubject<Connection> {
+  connect(taskId: string): BehaviorSubject<Connection> {
     const connId = uuid(); // идентификатор нового подключения
 
     // эдж кейс: только что созданный uuid уже обработан
-    if (this.pairs.get(connId) || this.queue.getValue().includes(connId)) {
-      this.connect();
+    if (
+      this.pairs.get(connId) ||
+      this.getQueue(taskId).getValue().includes(connId)
+    ) {
+      this.connect(taskId);
       return;
     }
 
     const connection = new BehaviorSubject<Connection>({ peer1: connId });
 
     this.pairs.set(connId, connection);
-    this.addToQueue(connId);
+    this.addToQueue(taskId, connId);
 
-    const subscription = this.queue.subscribe({
+    const subscription = this.getQueue(taskId).subscribe({
       next: (queue) => {
         if (
           queue.length &&
@@ -61,7 +75,7 @@ export class ConnectorService {
           connection.next({ peer1: connId, peer2: peerId });
           peerConnection.next({ peer1: peerId, peer2: connId });
 
-          this.removeFromQueue(connId, peerId);
+          this.removeFromQueue(taskId, connId, peerId);
         }
       },
     });
@@ -70,13 +84,13 @@ export class ConnectorService {
     return connection;
   }
 
-  retry(connId: string): void {
-    if (!this.queue.getValue().includes(connId)) {
-      this.addToQueue(connId);
+  retry(taskId: string, connId: string): void {
+    if (!this.getQueue(taskId).getValue().includes(connId)) {
+      this.addToQueue(taskId, connId);
     }
   }
 
-  decline(connId: string): void {
+  decline(taskId: string, connId: string): void {
     const connection = this.pairs.get(connId);
     const peerId = this.getPeer(connId, connection);
 
@@ -85,26 +99,26 @@ export class ConnectorService {
     if (peerId) {
       const peerConnection = this.pairs.get(peerId);
       peerConnection.next({ peer1: peerId, wasClosed: true });
-      this.addToQueue(peerId);
+      this.addToQueue(taskId, peerId);
     }
   }
 
-  disconnect(connId: string): void {
+  disconnect(taskId: string, connId: string): void {
     const connection = this.pairs.get(connId);
     const peerId = this.getPeer(connId, connection);
-    const queue = this.queue.getValue();
+    const queue = this.getQueue(taskId).getValue();
 
     this.pairs.delete(connId);
     this.destructors.get(connection)?.();
 
     if (queue.includes(connId)) {
-      this.removeFromQueue(connId);
+      this.removeFromQueue(taskId, connId);
     }
 
     if (peerId) {
       const peerConnection = this.pairs.get(peerId);
       peerConnection.next({ peer1: peerId, wasClosed: true });
-      this.addToQueue(peerId);
+      this.addToQueue(taskId, peerId);
     }
   }
 }
