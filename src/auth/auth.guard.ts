@@ -5,8 +5,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { JWT_SECRET } from '@/common';
+import { Errors, JWT_SECRET } from '@/common';
 import { Request } from 'express';
+import { createError } from '@/utils';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -16,7 +17,12 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(
+        createError(
+          Errors.INCORRECT_AUTHORIZATION_HEADER,
+          'Missing or incorrect authorization header',
+        ),
+      );
     }
     try {
       const payload = await this.jwtService.verifyAsync(token, {
@@ -26,7 +32,12 @@ export class AuthGuard implements CanActivate {
       // so that we can access it in our route handlers
       request.user = payload;
     } catch {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(
+        createError(
+          Errors.INCORRECT_AUTHORIZATION_HEADER,
+          'Could not verify specified token',
+        ),
+      );
     }
     return true;
   }

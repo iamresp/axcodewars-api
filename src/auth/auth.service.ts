@@ -7,6 +7,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as sha256 from 'sha256';
 import { Jwt } from './models';
+import { createError } from '@/utils';
+import { Errors } from '@/common';
 
 @Injectable()
 export class AuthService {
@@ -20,12 +22,16 @@ export class AuthService {
   async signIn(username: string, hash: string): Promise<Jwt> {
     const user = await this.userService.findOne({ username });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(
+        createError(Errors.USER_NOT_FOUND, 'No user with such username found'),
+      );
     }
     if (user?.hash !== sha256.x2(hash)) {
-      throw new UnauthorizedException('Wrong password');
+      throw new UnauthorizedException(
+        createError(Errors.WRONG_PASSWORD, 'Wrong password'),
+      );
     }
-    const payload = { sub: user.uuid, username: user.username };
+    const { hash: _, ...payload } = user;
     return {
       access_token: await this.jwtService.signAsync(payload),
     };

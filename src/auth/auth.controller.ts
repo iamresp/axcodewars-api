@@ -1,52 +1,38 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
-  Headers,
   NotFoundException,
   Param,
   Post,
   Put,
+  Request,
   UseGuards,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
-import { Jwt, SignInPayload } from './models';
+import { Jwt, PatchedRequest, SignInPayload } from './models';
 import { AuthGuard } from './auth.guard';
 import { User, UserService } from '@/user';
+import { createError } from '@/utils';
+import { Errors } from '@/common';
 
 @Controller('auth')
 export class AuthController {
   constructor(
-    private readonly jwtService: JwtService,
     private readonly authService: AuthService,
     private readonly userService: UserService,
   ) {}
 
   @Post()
   async signIn(@Body() payload: SignInPayload): Promise<Jwt> {
-    try {
-      const { hash, username } = payload;
-      return this.authService.signIn(username, hash);
-    } catch (e: unknown) {
-      throw new BadRequestException();
-    }
+    const { hash, username } = payload;
+    return this.authService.signIn(username, hash);
   }
 
   @UseGuards(AuthGuard)
   @Get('user')
-  async getUser(@Headers('Authorization') header: string): Promise<User> {
-    const [type, token] = header.split(' ');
-    if (type !== 'Bearer') {
-      throw new BadRequestException();
-    }
-    try {
-      const decodedJwt = this.jwtService.decode(token);
-      return this.userService.findOne({ uuid: decodedJwt.sub as string });
-    } catch (e: unknown) {
-      throw new BadRequestException();
-    }
+  async getUser(@Request() req: PatchedRequest): Promise<Omit<User, 'hash'>> {
+    return req.user;
   }
 
   @UseGuards(AuthGuard)
@@ -65,26 +51,18 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @Put('user')
   async updateUser(
-    @Headers('Authorization') header: string,
+    @Request() req: PatchedRequest,
     @Body() payload: Partial<User>,
   ): Promise<User> {
-    const [type, token] = header.split(' ');
-    if (type !== 'Bearer') {
-      throw new BadRequestException();
+    const user = await this.userService.findOne({
+      uuid: req.user.uuid,
+    });
+    if (!user?.id) {
+      throw new NotFoundException(
+        createError(Errors.USER_NOT_FOUND, 'User not found'),
+      );
     }
-    try {
-      const decodedJwt = this.jwtService.decode(token);
-      const user = await this.userService.findOne({
-        uuid: decodedJwt.sub as string,
-      });
 
-      if (!user?.id) {
-        throw new NotFoundException();
-      }
-
-      return this.userService.updateOne(user.id, payload);
-    } catch (e: unknown) {
-      throw new BadRequestException();
-    }
+    return this.userService.updateOne(user.id, payload);
   }
 }

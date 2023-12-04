@@ -1,7 +1,18 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { TaskService } from './task.service';
 import { AuthGuard } from '@/auth';
 import { Task } from './schemas/task.schema';
+import { CreateTasksResponseDto } from './models';
+import { createError } from '@/utils';
+import { Errors } from '@/common';
 
 @Controller('tasks')
 export class TaskController {
@@ -16,12 +27,25 @@ export class TaskController {
   @UseGuards(AuthGuard)
   @Get('/:id')
   async getTask(@Param('id') uuid: string): Promise<Task> {
-    return this.taskService.findOne({ uuid });
+    const task = this.taskService.findOne({ uuid });
+
+    if (!task) {
+      throw new NotFoundException(
+        createError(
+          Errors.TASK_ALREADY_EXISTS,
+          `Task with uuid ${uuid} not found`,
+        ),
+      );
+    }
+
+    return task;
   }
 
   @UseGuards(AuthGuard)
   @Post()
-  async createTask(@Body() payload: Task): Promise<Task> {
-    return this.taskService.createTask(payload);
+  async createTask(
+    @Body() payload: Task | Task[],
+  ): Promise<CreateTasksResponseDto> {
+    return this.taskService.createTasks([payload].flat());
   }
 }

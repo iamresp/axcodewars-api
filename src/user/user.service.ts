@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { TUserDocument, User } from './schemas/user.schema';
 import * as sha256 from 'sha256';
 import { CreateUserResponseDto } from './models';
+import { createError } from '@/utils';
+import { Errors } from '@/common';
 
 @Injectable()
 export class UserService {
@@ -40,7 +42,12 @@ export class UserService {
   ): Promise<CreateUserResponseDto> {
     const foundUser = await this.findOne({ username });
     if (foundUser) {
-      throw new BadRequestException('User already exists');
+      throw new BadRequestException(
+        createError(
+          Errors.USER_ALREADY_EXISTS,
+          `User ${username} already exists`,
+        ),
+      );
     }
     const uuid = uuidv4();
     const createdUser = new this.usersRepository({

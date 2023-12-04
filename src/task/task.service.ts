@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { Task, TTaskDocument } from './schemas/task.schema';
+import { CreateTasksResponseDto } from './models';
 
 @Injectable()
 export class TaskService {
@@ -31,17 +32,29 @@ export class TaskService {
 
   /* API methods */
 
-  async createTask(payload: Task): Promise<Task> {
-    const foundTask = await this.findOne({ title: payload.title });
-    if (foundTask) {
-      throw new BadRequestException('Task with such title already exists');
+  async createTasks(payload: Task[]): Promise<CreateTasksResponseDto> {
+    const omitted: Task[] = [];
+
+    for (const task of payload) {
+      const foundTask = await this.findOne({ title: task.title });
+
+      if (foundTask) {
+        omitted.push(foundTask);
+      }
     }
-    const uuid = uuidv4();
-    payload.uuid = uuid;
 
-    const createdTask = new this.tasksRepository(payload);
-    await createdTask.save();
+    const inserted = payload
+      .filter((task) => !omitted.includes(task))
+      .map((task) => {
+        const uuid = uuidv4();
+        return { ...task, uuid };
+      });
 
-    return createdTask;
+    await this.tasksRepository.insertMany(inserted);
+
+    return {
+      inserted,
+      omitted,
+    };
   }
 }

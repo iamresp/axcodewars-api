@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserRequestDto, CreateUserResponseDto } from './models';
 
@@ -10,11 +10,7 @@ export class UserController {
   async createUser(
     @Body() payload: CreateUserRequestDto,
   ): Promise<CreateUserResponseDto> {
-    try {
-      const { avatar, hash, username } = payload;
-      return this.userService.createUser(username, hash, avatar);
-    } catch (e: unknown) {
-      throw new BadRequestException();
-    }
+    const { avatar, hash, username } = payload;
+    return this.userService.createUser(username, hash, avatar);
   }
 }
