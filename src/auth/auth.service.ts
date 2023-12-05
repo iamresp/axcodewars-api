@@ -1,4 +1,4 @@
-import { UserService } from '@/user';
+import { User, UserService } from '@/user';
 import {
   Injectable,
   NotFoundException,
@@ -31,7 +31,14 @@ export class AuthService {
         createError(Errors.WRONG_PASSWORD, 'Wrong password'),
       );
     }
-    const { hash: _, ...payload } = user;
+
+    const payload: Omit<User, 'hash'> = {
+      avatar: user.avatar,
+      connId: user.connId,
+      username: user.username,
+      uuid: user.uuid,
+    };
+
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
