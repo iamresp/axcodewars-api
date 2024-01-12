@@ -4,12 +4,14 @@ import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { Task, TTaskDocument } from './schemas/task.schema';
 import { CreateTasksResponseDto } from './models';
+import { TaskUser, TTaskUserDocument } from './schemas/task-user.schema';
 
 @Injectable()
 export class TaskService {
   constructor(
     @InjectModel(Task.name)
     private tasksRepository: Model<TTaskDocument>,
+    private taskUsersRepository: Model<TTaskUserDocument>,
   ) {}
 
   /* Database methods */
@@ -32,7 +34,10 @@ export class TaskService {
 
   /* API methods */
 
-  async createTasks(payload: Task[]): Promise<CreateTasksResponseDto> {
+  async createTasks(
+    payload: Task[],
+    userUuid: string,
+  ): Promise<CreateTasksResponseDto> {
     const omitted: Task[] = [];
 
     for (const task of payload) {
@@ -50,7 +55,13 @@ export class TaskService {
         return { ...task, uuid };
       });
 
+    const userAuthorshipPayload: TaskUser[] = inserted.map(({ uuid }) => ({
+      taskUuid: uuid,
+      userUuid,
+    }));
+
     await this.tasksRepository.insertMany(inserted);
+    await this.taskUsersRepository.insertMany(userAuthorshipPayload);
 
     return {
       inserted,

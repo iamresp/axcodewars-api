@@ -5,6 +5,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { TaskService } from './task.service';
@@ -13,6 +14,7 @@ import { Task } from './schemas/task.schema';
 import { CreateTasksResponseDto } from './models';
 import { createError } from '@/utils';
 import { Errors } from '@/common';
+import { PatchedRequest } from '@/auth/models';
 
 @Controller('tasks')
 export class TaskController {
@@ -44,8 +46,9 @@ export class TaskController {
   @UseGuards(AuthGuard)
   @Post()
   async createTask(
+    @Request() req: PatchedRequest,
     @Body() payload: Task | Task[],
   ): Promise<CreateTasksResponseDto> {
-    return this.taskService.createTasks([payload].flat());
+    return this.taskService.createTasks([payload].flat(), req.user.uuid);
   }
 }
