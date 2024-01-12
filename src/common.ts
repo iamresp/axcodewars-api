@@ -3,6 +3,8 @@ import * as appConfig from '@/private/config.json';
 
 config();
 
+export const GLOBAL_PREFIX = 'api';
+
 export const { JWT_SECRET } = appConfig;
 
 export const DATABASE_HOST = process.env.DATABASE_HOST;
@@ -12,6 +14,8 @@ export const DATABASE_NAME = process.env.DATABASE_NAME;
 export const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD;
 
 export const DATABASE_USER = process.env.DATABASE_USER;
+
+export const PUBLIC_URL = process.env.PUBLIC_URL;
 
 export enum Errors {
   INCORRECT_AUTHORIZATION_HEADER = 1,
@@ -27,4 +31,5 @@ export enum Errors {
   UNSUPPORTED_EXTENSION,
   FILE_NOT_FOUND,
   UNKNOWN_FILE_ERROR,
+  UNPROCESSABLE_ENTITY,
 }

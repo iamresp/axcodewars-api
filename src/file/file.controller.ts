@@ -15,11 +15,10 @@ import { Response } from 'express';
 import { createError } from '@/utils';
 import { Errors } from '@/common';
 import { ENOENT, SUPPORTED_EXTENSIONS, UPLOADS_DIR } from './constants';
-import { FileService } from './file.service';
 
 @Controller('files')
 export class FileController {
-  constructor(private readonly fileService: FileService) {}
+  constructor() {}
 
   @Get('images/:filename')
   async getFile(
