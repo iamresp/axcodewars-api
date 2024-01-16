@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   Post,
   Request,
@@ -18,6 +19,8 @@ import { Errors } from '@/common';
 
 @Controller('connector')
 export class ConnectorController {
+  private readonly logger = new Logger(ConnectorController.name);
+
   constructor(
     private readonly connectorService: ConnectorService,
     private readonly userService: UserService,
@@ -57,10 +60,10 @@ export class ConnectorController {
       userUuid: req.user.uuid,
     });
 
-    console.log(userConnection, req.user.uuid);
+    this.logger.log(userConnection, req.user.uuid);
 
     if (userConnection) {
-      console.log('throw an exception');
+      this.logger.log('throw an exception');
       throw new BadRequestException(
         createError(
           Errors.CONNECTION_ALREADY_EXISTS,
@@ -69,7 +72,7 @@ export class ConnectorController {
       );
     }
 
-    console.log('return null');
+    this.logger.log('return null');
     return null;
   }
 }
