@@ -26,7 +26,7 @@ export class ConnectorService {
   async findOne(
     knownData: Partial<UserConnection>,
   ): Promise<TUserConnectionDocument> {
-    return await this.userConnectionsRepository.findOne(knownData).exec();
+    return this.userConnectionsRepository.findOne(knownData).exec();
   }
 
   getQueue(taskId: string): BehaviorSubject<string[]> {

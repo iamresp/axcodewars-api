@@ -18,19 +18,19 @@ export class UserService {
   /* Database methods */
 
   async findOne(knownData: Partial<User>): Promise<TUserDocument> {
-    return await this.usersRepository.findOne(knownData).exec();
+    return this.usersRepository.findOne(knownData).exec();
   }
 
   async findById(id: string): Promise<TUserDocument> {
-    return await this.usersRepository.findById(id).exec();
+    return this.usersRepository.findById(id).exec();
   }
 
   async find(): Promise<TUserDocument[]> {
-    return await this.usersRepository.find().exec();
+    return this.usersRepository.find().exec();
   }
 
   async updateOne(id: string, $set: Partial<User>): Promise<TUserDocument> {
-    return await this.usersRepository.findByIdAndUpdate(id, { $set }).exec();
+    return this.usersRepository.findByIdAndUpdate(id, { $set }).exec();
   }
 
   /* API methods */

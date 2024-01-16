@@ -19,23 +19,23 @@ export class TaskService {
   /* Database methods */
 
   async findOne(knownData: Partial<Task>): Promise<TTaskDocument> {
-    return await this.tasksRepository.findOne(knownData).exec();
+    return this.tasksRepository.findOne(knownData).exec();
   }
 
   async findById(id: string): Promise<TTaskDocument> {
-    return await this.tasksRepository.findById(id).exec();
+    return this.tasksRepository.findById(id).exec();
   }
 
   async find(): Promise<TTaskDocument[]> {
-    return await this.tasksRepository.find().exec();
+    return this.tasksRepository.find().exec();
   }
 
   async findByTitle(title: string): Promise<TTaskDocument[]> {
-    return await this.tasksRepository.find({ title }).exec();
+    return this.tasksRepository.find({ title }).exec();
   }
 
   async updateOne(id: string, $set: Partial<Task>): Promise<TTaskDocument> {
-    return await this.tasksRepository.findByIdAndUpdate(id, { $set }).exec();
+    return this.tasksRepository.findByIdAndUpdate(id, { $set }).exec();
   }
 
   async deleteOne(uuid: string): Promise<DeleteResult> {
@@ -43,7 +43,7 @@ export class TaskService {
   }
 
   async findAuthor(taskUuid: string): Promise<TTaskUserDocument> {
-    return await this.taskUsersRepository.findOne({ taskUuid }).exec();
+    return this.taskUsersRepository.findOne({ taskUuid }).exec();
   }
 
   /* API methods */

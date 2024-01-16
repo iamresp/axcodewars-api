@@ -56,7 +56,11 @@ export class ConnectorController {
     const userConnection = await this.connectorService.findOne({
       userUuid: req.user.uuid,
     });
+
+    console.log(userConnection, req.user.uuid);
+
     if (userConnection) {
+      console.log('throw an exception');
       throw new BadRequestException(
         createError(
           Errors.CONNECTION_ALREADY_EXISTS,
@@ -65,6 +69,7 @@ export class ConnectorController {
       );
     }
 
+    console.log('return null');
     return null;
   }
 }
