@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   NotFoundException,
-  Param,
   Post,
   Put,
   Request,
@@ -33,19 +32,6 @@ export class AuthController {
   @Get('user')
   async getUser(@Request() req: PatchedRequest): Promise<Omit<User, 'hash'>> {
     return req.user;
-  }
-
-  @UseGuards(AuthGuard)
-  @Get('user/:connId')
-  async getUserByConnId(
-    @Param('connId') connId: string,
-  ): Promise<Pick<User, 'avatar' | 'username'>> {
-    const user = await this.userService.findOne({ connId });
-
-    if (user) {
-      const { avatar, username } = user;
-      return { avatar, username };
-    }
   }
 
   @UseGuards(AuthGuard)

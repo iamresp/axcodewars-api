@@ -23,6 +23,12 @@ export class ConnectorService {
     private userConnectionsRepository: Model<TUserConnectionDocument>,
   ) {}
 
+  async findOne(
+    knownData: Partial<UserConnection>,
+  ): Promise<TUserConnectionDocument> {
+    return await this.userConnectionsRepository.findOne(knownData).exec();
+  }
+
   getQueue(taskId: string): BehaviorSubject<string[]> {
     if (!this.queue.get(taskId)) {
       this.queue.set(taskId, new BehaviorSubject([]));
