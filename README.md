@@ -198,7 +198,7 @@ Array<{
 }
 ```
 
-### GET /validate
+### GET /api/connector/validate
 
 > Требует авторизации с помощью JWT: заголовок `Authorization` формата `Bearer ${jwt}`.
 
