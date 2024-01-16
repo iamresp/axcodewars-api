@@ -55,7 +55,7 @@ export class ConnectorController {
 
   @UseGuards(AuthGuard)
   @Get('validate')
-  async validate(@Request() req: PatchedRequest): Promise<null | never> {
+  async validate(@Request() req: PatchedRequest): Promise<null> {
     try {
       const userConnection = await this.connectorService.findOne({
         userUuid: req.user.uuid,
