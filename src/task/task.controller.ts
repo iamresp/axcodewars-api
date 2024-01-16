@@ -33,10 +33,7 @@ export class TaskController {
 
     if (!task) {
       throw new NotFoundException(
-        createError(
-          Errors.TASK_ALREADY_EXISTS,
-          `Task with uuid ${uuid} not found`,
-        ),
+        createError(Errors.TASK_NOT_FOUND, `Task with uuid ${uuid} not found`),
       );
     }
 

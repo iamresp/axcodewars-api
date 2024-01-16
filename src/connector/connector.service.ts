@@ -2,6 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { BehaviorSubject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Connection } from './models';
+import { InjectModel } from '@nestjs/mongoose';
+import {
+  TUserConnectionDocument,
+  UserConnection,
+} from './schemas/user-connection.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class ConnectorService {
@@ -11,6 +17,11 @@ export class ConnectorService {
     BehaviorSubject<Connection>,
     () => void
   > = new WeakMap();
+
+  constructor(
+    @InjectModel(UserConnection.name)
+    private userConnectionsRepository: Model<TUserConnectionDocument>,
+  ) {}
 
   getQueue(taskId: string): BehaviorSubject<string[]> {
     if (!this.queue.get(taskId)) {
@@ -42,6 +53,16 @@ export class ConnectorService {
     const queue = this.getQueue(taskId).getValue();
     connIds.forEach((connId) => queue.splice(queue.indexOf(connId), 1));
     this.getQueue(taskId).next([...queue]);
+  }
+
+  async bind(userUuid: string, connId: string): Promise<void> {
+    const userConnection = new this.userConnectionsRepository({
+      userUuid,
+      connId,
+    });
+
+    await this.userConnectionsRepository.deleteMany({ userUuid }).exec();
+    await userConnection.save();
   }
 
   connect(taskId: string): BehaviorSubject<Connection> {
@@ -116,6 +137,8 @@ export class ConnectorService {
     if (queue.includes(connId)) {
       this.removeFromQueue(taskId, connId);
     }
+
+    void this.userConnectionsRepository.deleteOne({ connId }).exec();
 
     if (peerId) {
       const peerConnection = this.pairs.get(peerId);

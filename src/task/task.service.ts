@@ -11,6 +11,7 @@ export class TaskService {
   constructor(
     @InjectModel(Task.name)
     private tasksRepository: Model<TTaskDocument>,
+    @InjectModel(TaskUser.name)
     private taskUsersRepository: Model<TTaskUserDocument>,
   ) {}
 
