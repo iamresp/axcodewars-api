@@ -58,7 +58,7 @@ export class TaskService {
       const foundTask = await this.findOne({ title: task.title });
 
       if (foundTask) {
-        omitted.push(foundTask);
+        omitted.push(task);
       }
     }
 
