@@ -8,13 +8,14 @@ import { JwtService } from '@nestjs/jwt';
 import { Errors, JWT_SECRET } from '@/common';
 import { Request } from 'express';
 import { createError } from '@/utils';
+import { PatchedRequest } from './models';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<PatchedRequest>();
     const token = this.extractTokenFromHeader(request);
     if (!token) {
       throw new UnauthorizedException(

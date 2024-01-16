@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Task, TTaskDocument } from './schemas/task.schema';
 import { CreateTasksResponseDto } from './models';
 import { TaskUser, TTaskUserDocument } from './schemas/task-user.schema';
+import { DeleteResult } from 'mongodb';
 
 @Injectable()
 export class TaskService {
@@ -29,8 +30,20 @@ export class TaskService {
     return await this.tasksRepository.find().exec();
   }
 
+  async findByTitle(title: string): Promise<TTaskDocument[]> {
+    return await this.tasksRepository.find({ title }).exec();
+  }
+
   async updateOne(id: string, $set: Partial<Task>): Promise<TTaskDocument> {
     return await this.tasksRepository.findByIdAndUpdate(id, { $set }).exec();
+  }
+
+  async deleteOne(uuid: string): Promise<DeleteResult> {
+    return this.tasksRepository.deleteOne({ uuid }).exec();
+  }
+
+  async findAuthor(taskUuid: string): Promise<TTaskUserDocument> {
+    return await this.taskUsersRepository.findOne({ taskUuid }).exec();
   }
 
   /* API methods */
