@@ -3,7 +3,6 @@ import {
   Body,
   Controller,
   Get,
-  Logger,
   Param,
   Post,
   Request,
@@ -19,8 +18,6 @@ import { Errors } from '@/common';
 
 @Controller('connector')
 export class ConnectorController {
-  private readonly logger = new Logger(ConnectorController.name);
-
   constructor(
     private readonly connectorService: ConnectorService,
     private readonly userService: UserService,
@@ -33,6 +30,25 @@ export class ConnectorController {
     @Body() payload: Pick<UserConnection, 'connId'>,
   ): Promise<void> {
     return this.connectorService.bind(req.user.uuid, payload.connId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('validate')
+  async validate(@Request() req: PatchedRequest): Promise<null | never> {
+    const userConnection = await this.connectorService.findOne({
+      userUuid: req.user.uuid,
+    });
+
+    if (userConnection) {
+      throw new BadRequestException(
+        createError(
+          Errors.CONNECTION_ALREADY_EXISTS,
+          `Connection ${userConnection.connId} already exists for user ${req.user.uuid}`,
+        ),
+      );
+    }
+
+    return null;
   }
 
   @UseGuards(AuthGuard)
@@ -50,35 +66,6 @@ export class ConnectorController {
         const { avatar, username } = user;
         return { avatar, username };
       }
-    }
-  }
-
-  @UseGuards(AuthGuard)
-  @Get('validate')
-  async validate(@Request() req: PatchedRequest): Promise<null> {
-    try {
-      const userConnection = await this.connectorService.findOne({
-        userUuid: req.user.uuid,
-      });
-
-      this.logger.log(
-        `${req.user.uuid} => ${userConnection?.connId ?? 'none'}`,
-      );
-
-      if (userConnection) {
-        this.logger.log('throw an exception');
-        throw new BadRequestException(
-          createError(
-            Errors.CONNECTION_ALREADY_EXISTS,
-            `Connection ${userConnection.connId} already exists for user ${req.user.uuid}`,
-          ),
-        );
-      }
-
-      this.logger.log('return null');
-      return null;
-    } catch (e: unknown) {
-      this.logger.log(`error, ${req.user.uuid} => ${e}`);
     }
   }
 }
