@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from '@/auth';
 import { ConnectorModule } from '@/connector';
+import { FileModule } from '@/file';
 import { EventsModule } from '@/events';
 import { TaskModule } from '@/task';
 import { UserModule } from '@/user';
@@ -23,6 +24,7 @@ import {
     AuthModule,
     ConfigModule.forRoot(),
     ConnectorModule,
+    FileModule,
     EventsModule,
     UserModule,
     TaskModule,
