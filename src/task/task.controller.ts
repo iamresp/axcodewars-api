@@ -64,7 +64,11 @@ export class TaskController {
       );
     }
 
-    return this.taskService.updateOne(uuid, payload);
+    if ('uuid' in payload) {
+      delete payload.uuid;
+    }
+
+    return this.taskService.updateOne(task.id, payload);
   }
 
   @UseGuards(AuthGuard, AuthorshipGuard)
@@ -72,7 +76,7 @@ export class TaskController {
   async deleteTask(@Param('id') uuid: string): Promise<boolean> {
     const result = await this.taskService.deleteOne(uuid);
 
-    if (result.acknowledged && Boolean(result.deletedCount)) {
+    if (result) {
       return true;
     }
 

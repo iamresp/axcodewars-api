@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { Task, TTaskDocument } from './schemas/task.schema';
 import { CreateTasksResponseDto } from './models';
 import { TaskUser, TTaskUserDocument } from './schemas/task-user.schema';
-import { DeleteResult } from 'mongodb';
 
 @Injectable()
 export class TaskService {
   constructor(
+    @InjectConnection()
+    private readonly connection: Connection,
     @InjectModel(Task.name)
     private tasksRepository: Model<TTaskDocument>,
     @InjectModel(TaskUser.name)
@@ -35,11 +36,24 @@ export class TaskService {
   }
 
   async updateOne(id: string, $set: Partial<Task>): Promise<TTaskDocument> {
-    return this.tasksRepository.findByIdAndUpdate(id, { $set }).exec();
+    return this.tasksRepository
+      .findByIdAndUpdate(id, { $set }, { new: true })
+      .exec();
   }
 
-  async deleteOne(uuid: string): Promise<DeleteResult> {
-    return this.tasksRepository.deleteOne({ uuid }).exec();
+  async deleteOne(uuid: string): Promise<boolean> {
+    const session = await this.connection.startSession();
+    session.startTransaction();
+    const results = await Promise.all([
+      this.tasksRepository.deleteOne({ uuid }).exec(),
+      this.taskUsersRepository.deleteOne({ taskUuid: uuid }).exec(),
+    ]);
+    await session.commitTransaction();
+    await session.endSession();
+
+    return results.every(
+      (result) => result.acknowledged && Boolean(result.deletedCount),
+    );
   }
 
   async findAuthor(taskUuid: string): Promise<TTaskUserDocument> {
@@ -74,8 +88,12 @@ export class TaskService {
       userUuid,
     }));
 
+    const session = await this.connection.startSession();
+    session.startTransaction();
     await this.tasksRepository.insertMany(inserted);
     await this.taskUsersRepository.insertMany(userAuthorshipPayload);
+    await session.commitTransaction();
+    await session.endSession();
 
     return {
       inserted,

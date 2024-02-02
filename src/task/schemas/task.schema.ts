@@ -15,7 +15,7 @@ export class Task {
   title: string;
 
   @Prop()
-  results: [string, string][];
+  results: [string[], string][];
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
