@@ -9,9 +9,6 @@ export class User {
   uuid: string;
 
   @Prop()
-  connId: string;
-
-  @Prop()
   username: string;
 
   @Prop()

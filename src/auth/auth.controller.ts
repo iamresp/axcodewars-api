@@ -31,15 +31,6 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @Get('user')
   async getUser(@Request() req: PatchedRequest): Promise<Omit<User, 'hash'>> {
-    return req.user;
-  }
-
-  @UseGuards(AuthGuard)
-  @Put('user')
-  async updateUser(
-    @Request() req: PatchedRequest,
-    @Body() payload: Partial<User>,
-  ): Promise<User> {
     const user = await this.userService.findOne({
       uuid: req.user.uuid,
     });
@@ -48,7 +39,30 @@ export class AuthController {
         createError(Errors.USER_NOT_FOUND, 'User not found'),
       );
     }
+    const { avatar, uuid, username } = user;
+    return { avatar, uuid, username };
+  }
 
-    return this.userService.updateOne(user.id, payload);
+  @UseGuards(AuthGuard)
+  @Put('user')
+  async updateUser(
+    @Request() req: PatchedRequest,
+    @Body() payload: Partial<Omit<User, 'uuid'>>,
+  ): Promise<Omit<User, 'hash'>> {
+    const user = await this.userService.findOne({
+      uuid: req.user.uuid,
+    });
+
+    if (!user?.id) {
+      throw new NotFoundException(
+        createError(Errors.USER_NOT_FOUND, 'User not found'),
+      );
+    }
+
+    if ('uuid' in payload) {
+      delete payload.uuid;
+    }
+
+    return this.userService.findByIdAndUpdate(user.id, payload);
   }
 }

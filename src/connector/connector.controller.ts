@@ -11,7 +11,7 @@ import {
 import { ConnectorService } from './connector.service';
 import { AuthGuard } from '@/auth';
 import { UserConnection } from './schemas/user-connection.schema';
-import { PatchedRequest } from '@/auth/models';
+import { PatchedRequest } from '@/auth';
 import { User, UserService } from '@/user';
 import { createError } from '@/utils';
 import { Errors } from '@/common';

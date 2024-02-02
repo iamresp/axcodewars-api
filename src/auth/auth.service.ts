@@ -32,10 +32,7 @@ export class AuthService {
       );
     }
 
-    const payload: Omit<User, 'hash'> = {
-      avatar: user.avatar,
-      connId: user.connId,
-      username: user.username,
+    const payload: Pick<User, 'uuid'> = {
       uuid: user.uuid,
     };
 

@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { PatchedRequest } from '@/auth/models';
+import { PatchedRequest } from '@/auth';
 import { TaskService } from './task.service';
 import { createError } from '@/utils';
 import { Errors } from '@/common';

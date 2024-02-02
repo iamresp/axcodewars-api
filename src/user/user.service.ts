@@ -29,8 +29,16 @@ export class UserService {
     return this.usersRepository.find().exec();
   }
 
-  async updateOne(id: string, $set: Partial<User>): Promise<TUserDocument> {
-    return this.usersRepository.findByIdAndUpdate(id, { $set }).exec();
+  async findByIdAndUpdate(
+    id: string,
+    $set: Partial<User>,
+  ): Promise<Omit<User, 'hash'>> {
+    const user = await this.usersRepository
+      .findByIdAndUpdate(id, { $set }, { new: true })
+      .exec();
+
+    const { avatar, username, uuid } = user;
+    return { avatar, username, uuid };
   }
 
   /* API methods */

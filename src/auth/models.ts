@@ -11,5 +11,5 @@ export interface SignInPayload {
 }
 
 export interface PatchedRequest extends Request {
-  user: Omit<User, 'hash'>;
+  user: Pick<User, 'uuid'>;
 }

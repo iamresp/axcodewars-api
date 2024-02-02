@@ -11,13 +11,12 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { AuthGuard, PatchedRequest } from '@/auth';
+import { Errors } from '@/common';
+import { createError } from '@/utils';
 import { TaskService } from './task.service';
-import { AuthGuard } from '@/auth';
 import { Task } from './schemas/task.schema';
 import { CreateTasksResponseDto } from './models';
-import { createError } from '@/utils';
-import { Errors } from '@/common';
-import { PatchedRequest } from '@/auth/models';
 import { AuthorshipGuard } from './authorship.guard';
 
 @Controller('tasks')
