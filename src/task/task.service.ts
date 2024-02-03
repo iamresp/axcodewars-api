@@ -27,8 +27,73 @@ export class TaskService {
     return this.tasksRepository.findById(id).exec();
   }
 
-  async find(): Promise<TTaskDocument[]> {
-    return this.tasksRepository.find().exec();
+  async find(
+    userUuid: string,
+    search: string = '',
+    my: boolean = false,
+  ): Promise<TTaskDocument[]> {
+    const regex = new RegExp(`${search}`, 'i');
+
+    return this.tasksRepository
+      .aggregate(
+        [
+          my
+            ? {
+                $lookup: {
+                  from: 'taskusers',
+                  let: {
+                    userUuid: '$userUuid',
+                    taskUuid: '$uuid',
+                  },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $and: [
+                            {
+                              $eq: ['$userUuid', userUuid],
+                            },
+                            {
+                              $eq: ['$taskUuid', '$$taskUuid'],
+                            },
+                          ],
+                        },
+                      },
+                    },
+                  ],
+                  as: 'author',
+                },
+              }
+            : null,
+          my
+            ? {
+                $match: {
+                  author: {
+                    $exists: true,
+                    $ne: [],
+                  },
+                },
+              }
+            : null,
+          search
+            ? {
+                $match: {
+                  $expr: {
+                    $or: [
+                      { $regexMatch: { input: '$title', regex } },
+                      { $regexMatch: { input: '$description', regex } },
+                    ],
+                  },
+                },
+              }
+            : null,
+          {
+            $unset: 'author',
+          },
+        ].filter(Boolean),
+        {},
+      )
+      .exec();
   }
 
   async findByTitle(title: string): Promise<TTaskDocument[]> {

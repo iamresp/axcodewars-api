@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -16,7 +17,7 @@ import { Errors } from '@/common';
 import { createError } from '@/utils';
 import { TaskService } from './task.service';
 import { Task } from './schemas/task.schema';
-import { CreateTasksResponseDto } from './models';
+import { CreateTasksResponseDto, TaskFilterTags } from './models';
 import { AuthorshipGuard } from './authorship.guard';
 
 @Controller('tasks')
@@ -25,8 +26,16 @@ export class TaskController {
 
   @UseGuards(AuthGuard)
   @Get()
-  async getTasks(): Promise<Task[]> {
-    return this.taskService.find();
+  async getTasks(
+    @Request() req: PatchedRequest,
+    @Query('search') search?: string,
+    @Query('tag') tag?: string,
+  ): Promise<Task[]> {
+    return this.taskService.find(
+      req.user.uuid,
+      search,
+      tag === TaskFilterTags.MY,
+    );
   }
 
   @UseGuards(AuthGuard)

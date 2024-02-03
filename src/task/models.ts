@@ -4,3 +4,7 @@ export interface CreateTasksResponseDto {
   inserted: Task[];
   omitted: Task[];
 }
+
+export enum TaskFilterTags {
+  MY = 'my',
+}
