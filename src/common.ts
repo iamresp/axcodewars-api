@@ -31,3 +31,8 @@ export enum Errors {
   UNKNOWN_FILE_ERROR,
   UNPROCESSABLE_ENTITY,
 }
+
+export const SORT_ORDER = {
+  ASC: 1,
+  DESC: -1,
+} as const;

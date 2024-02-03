@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Task, TTaskDocument } from './schemas/task.schema';
 import { CreateTasksResponseDto } from './models';
 import { TaskUser, TTaskUserDocument } from './schemas/task-user.schema';
+import { SORT_ORDER } from '@/common';
 
 @Injectable()
 export class TaskService {
@@ -29,8 +30,12 @@ export class TaskService {
 
   async find(
     userUuid: string,
-    search: string = '',
     my: boolean = false,
+    search: string = '',
+    sort?: 'title' | 'description',
+    order?: 1 | -1,
+    page?: number,
+    size: number = 10,
   ): Promise<TTaskDocument[]> {
     const regex = new RegExp(`${search}`, 'i');
 
@@ -85,6 +90,23 @@ export class TaskService {
                     ],
                   },
                 },
+              }
+            : null,
+          sort
+            ? {
+                $sort: {
+                  [sort]: order ?? SORT_ORDER.ASC,
+                },
+              }
+            : null,
+          page
+            ? {
+                $limit: page * size,
+              }
+            : null,
+          page
+            ? {
+                $skip: (page - 1) * size,
               }
             : null,
           {

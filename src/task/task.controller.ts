@@ -13,7 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard, PatchedRequest } from '@/auth';
-import { Errors } from '@/common';
+import { Errors, SORT_ORDER } from '@/common';
 import { createError } from '@/utils';
 import { TaskService } from './task.service';
 import { Task } from './schemas/task.schema';
@@ -28,13 +28,21 @@ export class TaskController {
   @Get()
   async getTasks(
     @Request() req: PatchedRequest,
-    @Query('search') search?: string,
     @Query('tag') tag?: string,
+    @Query('search') search?: string,
+    @Query('sort') sort?: 'title' | 'description',
+    @Query('order') order?: 'ASC' | 'DESC',
+    @Query('page') page?: number,
+    @Query('size') size?: number,
   ): Promise<Task[]> {
     return this.taskService.find(
       req.user.uuid,
-      search,
       tag === TaskFilterTags.MY,
+      search,
+      sort,
+      SORT_ORDER[order],
+      page,
+      size,
     );
   }
 
