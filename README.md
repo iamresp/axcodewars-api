@@ -1,17 +1,19 @@
 # Бэкенд для codewars-like приложения
 
-Для работы с функционалом peer-to-peer соединения реализован API на веб сокетах. Для данных о задачах и пользователей используется REST API.
+Для работы с функционалом peer-to-peer соединения реализован API на веб сокетах. Для данных о задачах и пользователей используется REST API. Для всех запросов с телом формат тела запроса должен быть JSON, если в описании запроса явно не указано иное.
 
 ## REST API
 
 ### POST /api/user
+
+> Формат тела запроса должен быть FormData.
 
 Создаёт нового пользователя. На вход принимает объект следующего вида:
 
 Формат запроса:
 ```ts
 {
-  avatar: string;
+  avatar?: File;
   hash: string;
   username: string;
 }
@@ -57,8 +59,6 @@
 ```ts
 {
   avatar: string;
-  connId: string;
-  hash: string;
   username: string;
   uuid: string;
 }
@@ -68,13 +68,14 @@
 
 > Требует авторизации с помощью JWT: заголовок `Authorization` формата `Bearer ${jwt}`.
 
+> Формат тела запроса должен быть FormData.
+
 Обновляет данные пользователя. Все поля запроса необязательны.
 
 Формат запроса:
 ```ts
 {
-  avatar?: string;
-  connId?: string;
+  avatar?: File;
   hash?: string;
   username?: string;
   uuid?: string;
@@ -85,7 +86,6 @@
 ```ts
 {
   avatar: string;
-  connId: string;
   hash: string;
   username: string;
   uuid: string;
