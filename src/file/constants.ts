@@ -10,7 +10,12 @@ import { createError } from '@/utils';
 
 export const FILE_MAX_SIZE = 2 ** 20 * 2;
 export const UPLOADS_DIR = 'uploads';
-export const SUPPORTED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
+export const MIME_TYPE_MAP = {
+  jpg: 'image',
+  jpeg: 'image',
+  png: 'image',
+  webp: 'image',
+};
 export const ENOENT = 'ENOENT';
 export const DISK_STORAGE = diskStorage({
   destination: function (_req, _file, cb) {
@@ -20,6 +25,7 @@ export const DISK_STORAGE = diskStorage({
     cb(null, `${uuid()}.${file.originalname.split('.').at(-1)}`);
   },
 });
+
 /**
  * Валидация загружаемых изображений.
  */

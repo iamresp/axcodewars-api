@@ -14,20 +14,20 @@ import { join } from 'path';
 import { Response } from 'express';
 import { createError } from '@/utils';
 import { Errors } from '@/common';
-import { ENOENT, SUPPORTED_EXTENSIONS, UPLOADS_DIR } from './constants';
+import { ENOENT, MIME_TYPE_MAP, UPLOADS_DIR } from './constants';
 
 @Controller('files')
 export class FileController {
   constructor() {}
 
-  @Get('images/:filename')
+  @Get(':filename')
   async getFile(
     @Res({ passthrough: true }) res: Response,
     @Param('filename') filename: string,
   ) {
     const ext = filename.split('.').at(-1);
 
-    if (!SUPPORTED_EXTENSIONS.includes(ext)) {
+    if (!(ext in MIME_TYPE_MAP)) {
       throw new BadRequestException(
         createError(
           Errors.UNSUPPORTED_EXTENSION,
@@ -43,7 +43,7 @@ export class FileController {
       const file = createReadStream(filepath);
 
       res.set({
-        'Content-Type': `image/${ext}`,
+        'Content-Type': `${MIME_TYPE_MAP[ext]}/${ext}`,
       });
 
       return new StreamableFile(file);
