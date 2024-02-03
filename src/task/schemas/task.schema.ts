@@ -9,6 +9,9 @@ export class Task {
   uuid: string;
 
   @Prop()
+  createdAt: Date;
+
+  @Prop()
   description: string;
 
   @Prop()
@@ -16,6 +19,9 @@ export class Task {
 
   @Prop()
   results: [string[], string][];
+
+  @Prop()
+  updatedAt: Date;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

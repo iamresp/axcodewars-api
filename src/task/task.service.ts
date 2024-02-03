@@ -32,7 +32,7 @@ export class TaskService {
     userUuid: string,
     my: boolean = false,
     search: string = '',
-    sort?: 'title' | 'description',
+    sort?: keyof Omit<Task, 'results' | 'uuid'>,
     order?: 1 | -1,
     page?: number,
     size: number = 10,
@@ -123,6 +123,8 @@ export class TaskService {
   }
 
   async updateOne(id: string, $set: Partial<Task>): Promise<TTaskDocument> {
+    $set.updatedAt = new Date();
+
     return this.tasksRepository
       .findByIdAndUpdate(id, { $set }, { new: true })
       .exec();
@@ -167,7 +169,8 @@ export class TaskService {
       .filter((task) => !omitted.includes(task))
       .map((task) => {
         const uuid = uuidv4();
-        return { ...task, uuid };
+        const createdAt = new Date();
+        return { ...task, createdAt, uuid };
       });
 
     const userAuthorshipPayload: TaskUser[] = inserted.map(({ uuid }) => ({

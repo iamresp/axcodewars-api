@@ -30,7 +30,7 @@ export class TaskController {
     @Request() req: PatchedRequest,
     @Query('tag') tag?: string,
     @Query('search') search?: string,
-    @Query('sort') sort?: 'title' | 'description',
+    @Query('sort') sort?: keyof Omit<Task, 'results' | 'uuid'>,
     @Query('order') order?: 'ASC' | 'DESC',
     @Query('page') page?: number,
     @Query('size') size?: number,
