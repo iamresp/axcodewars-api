@@ -109,9 +109,11 @@ export class TaskService {
                 $skip: (page - 1) * size,
               }
             : null,
-          {
-            $unset: 'author',
-          },
+          my
+            ? {
+                $unset: 'author',
+              }
+            : null,
         ].filter(Boolean),
         {},
       )

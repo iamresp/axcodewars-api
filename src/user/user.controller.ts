@@ -20,8 +20,7 @@ export class UserController {
   @UseInterceptors(FileInterceptor('avatar'))
   @UseFilters(new UnprocessableEntityExceptionFilter())
   async createUser(
-    @UploadedFile(IMAGE_VALIDATOR)
-    file: Express.Multer.File,
+    @UploadedFile(IMAGE_VALIDATOR) file: Express.Multer.File,
     @Body() payload: CreateUserRequestDto,
   ): Promise<CreateUserResponseDto> {
     const { hash, username } = payload;

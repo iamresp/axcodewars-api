@@ -20,12 +20,12 @@ export class AvatarInterceptor implements NestInterceptor {
   ): Promise<Observable<Pick<User, 'avatar'>>> {
     const request = context.switchToHttp().getRequest<Request>();
     const host = request.get('Host');
-    const baseUrl = `${request.protocol}://${host}/${GLOBAL_PREFIX}`;
+    const baseUrl = `${request.protocol}://${host}/${GLOBAL_PREFIX}/files`;
 
     return next.handle().pipe(
       map((data: Pick<User, 'avatar'>) => {
         if (data.avatar) {
-          data.avatar = `${baseUrl}/files/${data.avatar}`;
+          data.avatar = `${baseUrl}/${data.avatar}`;
         }
 
         return data;
